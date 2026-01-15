@@ -1,352 +1,183 @@
-<!-- index.html -->
+<!-- File: index.html -->
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Napoleon (Prototype)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>The Great Game</title>
   <link rel="stylesheet" href="./style.css" />
-  <script defer src="./main.js"></script>
 </head>
-
 <body>
   <div id="app">
-
-    <!-- Title -->
-    <section id="scene-title" class="scene active" aria-labelledby="title-heading">
-      <div class="panel">
-        <h1 id="title-heading">ナポレオン（プロトタイプ）</h1>
-
-        <div class="rules">
-          <h2>フロー</h2>
-          <ul>
-            <li>キャラ選択 → 配札 → ナポレオン宣言（競り） → 副官指定カード決定 → 隠し札2枚を見て12枚から2枚捨て → ゲーム開始</li>
-          </ul>
-
-          <h2>特殊札</h2>
-          <ul>
-            <li>♠A：オールマイティ（最強）</li>
-            <li>切り札J：正ジャック（2番目）</li>
-            <li>切り札と同色J：裏ジャック（3番目）</li>
-            <li>全員同スートでオールマイティ/正/裏がない時、2があればセイム2で勝ち</li>
-            <li>判定：オールマイティ → 正 → 裏 → セイム2 → 切り札 → 台札</li>
-          </ul>
-        </div>
-
-        <div class="row">
-          <button id="btn-start" class="primary">ゲーム開始</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Character Select -->
-    <section id="scene-select" class="scene" aria-labelledby="select-heading">
-      <div class="panel">
-        <h1 id="select-heading">キャラ選択</h1>
-        <p class="muted">アイコンか名前をクリックすると、そのキャラで進みます。</p>
-        <div id="select-grid" class="select-grid" aria-label="Character select"></div>
-        <div class="row">
-          <button id="btn-select-back" class="ghost">戻る</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bid -->
-    <section id="scene-bid" class="scene" aria-labelledby="bid-heading">
-      <div class="panel">
-        <div id="strip-bid" class="players-strip" aria-label="Players strip (bid)"></div>
-
-        <h1 id="bid-heading">ナポレオン宣言（競り）</h1>
-
-        <div class="bid-top">
-          <div>
-            <div class="muted small">現在の最高宣言</div>
-            <div id="bid-current" class="bid-current">—</div>
-            <div id="bid-turn" class="muted small" style="margin-top:6px;">—</div>
-          </div>
-
-          <div class="bid-controls" id="bid-controls">
-            <div class="muted small">宣言（クラブ11枚〜 / 最大♠20枚）</div>
-            <div class="row" style="margin-top:8px;">
-              <select id="bid-suit" class="select">
-                <option value="C">♣ クラブ</option>
-                <option value="D">♦ ダイヤ</option>
-                <option value="H">♥ ハート</option>
-                <option value="S">♠ スペード</option>
-              </select>
-              <select id="bid-count" class="select"></select>
-              <button id="btn-bid" class="primary">宣言</button>
-              <button id="btn-pass" class="ghost">パス</button>
-            </div>
-            <div id="bid-hint" class="muted small" style="margin-top:8px;">—</div>
-          </div>
-        </div>
-
-        <div class="bid-log">
-          <div class="log-head">ログ（最新が上）</div>
-          <div id="bid-log" class="log-body" aria-live="polite"></div>
-        </div>
-
-        <div class="row">
-          <button id="btn-bid-back" class="ghost">キャラ選択へ戻る</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Deputy Select -->
-    <section id="scene-dep" class="scene" aria-labelledby="dep-heading">
-      <div class="panel">
-        <div id="strip-dep" class="players-strip" aria-label="Players strip (deputy)"></div>
-
-        <h1 id="dep-heading">副官指定</h1>
-
-        <div class="dep-top">
-          <div>
-            <div class="muted small">ナポレオン</div>
-            <div id="dep-napoleon" class="bid-current">—</div>
-            <div id="dep-trump" class="muted small" style="margin-top:6px;">—</div>
-            <div class="muted small" style="margin-top:6px;">
-              副官指定カードは「自分の手札」や「隠し札」を含む任意のカードを指定可（被りも可）
-            </div>
-          </div>
-
-          <div class="dep-controls" id="dep-controls">
-            <div class="muted small">副官指定カード（スート＋番号）</div>
-            <div class="row" style="margin-top:8px;">
-              <select id="dep-suit" class="select">
-                <option value="C">♣ クラブ</option>
-                <option value="D">♦ ダイヤ</option>
-                <option value="H">♥ ハート</option>
-                <option value="S">♠ スペード</option>
-              </select>
-              <select id="dep-rank" class="select"></select>
-              <button id="btn-dep-ok" class="primary">決定</button>
-            </div>
-            <div id="dep-hint" class="muted small" style="margin-top:8px;">—</div>
-          </div>
-        </div>
-
-        <div class="hand-wrap" style="margin-top:12px;">
-          <div class="muted small">あなたの配られた手札（10枚）</div>
-          <div id="dep-hand" class="hand" aria-label="Your dealt hand on deputy screen"></div>
-          <div class="hand-wrap" style="margin-top:12px;">
-          <div class="muted small" id="dep-nap-hand-title">ナポレオンの手札（CPU時は非表示）</div>
-          <div id="dep-nap-hand" class="hand" aria-label="Napoleon hand on deputy screen"></div>
-        </div>
-        </div>
-
-        <div class="bid-log">
-          <div class="log-head">ログ（最新が上）</div>
-          <div id="dep-log" class="log-body" aria-live="polite"></div>
-        </div>
-
-        <div class="row">
-          <button id="btn-dep-back" class="ghost">キャラ選択へ戻る</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Discard -->
-    <section id="scene-discard" class="scene" aria-labelledby="discard-heading">
-      <div class="panel">
-        <div id="strip-discard" class="players-strip" aria-label="Players strip (discard)"></div>
-
-        <h1 id="discard-heading">隠し札（ナポレオンのみ）</h1>
-
-        <div class="discard-top">
-          <div>
-            <div class="muted small">ナポレオン</div>
-            <div id="discard-napoleon" class="bid-current">—</div>
-            <div id="discard-hint" class="muted small" style="margin-top:6px;">—</div>
-          </div>
-
-          <div class="discard-controls" id="discard-controls">
-            <div class="muted small">12枚の手札から不要な2枚を捨てる</div>
-            <div class="row" style="margin-top:8px;">
-              <button id="btn-discard-ok" class="primary" disabled>2枚捨てる</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="hand-wrap" style="margin-top:12px;">
-          <div class="muted small" id="discard-hand-title">手札（クリックで捨て札候補を選択）</div>
-          <div id="discard-hand" class="hand" aria-label="Napoleon discard hand"></div>
-        </div>
-
-        <div class="bid-log" style="margin-top:12px;">
-          <div class="log-head">ログ（最新が上）</div>
-          <div id="discard-log" class="log-body" aria-live="polite"></div>
-        </div>
-
-        <div class="row">
-          <button id="btn-discard-back" class="ghost">キャラ選択へ戻る</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Game -->
-    <section id="scene-game" class="scene" aria-labelledby="game-heading">
-      <header class="topbar">
-        <div>
-          <div id="game-heading" class="title">Napoleon (Prototype)</div>
-          <div id="status" class="muted small">status</div>
-        </div>
-        <div class="row">
-          <button id="btn-restart" class="ghost">ニューゲーム</button>
-          <button id="btn-back-title" class="ghost">スタートへ</button>
-        </div>
+    <!-- スケーリング対象 -->
+    <div id="stage">
+      <header id="topbar">
+        <div id="charFrames" class="char-frames"></div>
       </header>
 
-      <main class="game">
-        <div id="table" class="table" role="application" aria-label="Game table">
+      <main id="main">
+  <!-- TITLE -->
+  <section id="scene-title" class="scene active">
+    <div class="panel title-panel">
+      <h1>The Great Game</h1>
+      <p class="subtitle">16〜19世紀のヨーロッパの5帝国を擬人化した少女たちのナポレオン</p>
 
-          <section id="seat0" class="player">
-            <div class="player-head">
-              <div class="player-name">
-                <img id="seat0-avatar" class="avatar" alt="マリア" />
-                <span id="seat0-name">マリア</span>
-                <span id="seat0-role" class="role"></span>
-                <span id="seat0-dep" class="role"></span>
-              </div>
-              <div class="player-meta" id="seat0-meta">-</div>
-            </div>
-            <div class="won-wrap">
-              <div class="muted small">獲得（得点札：10/J/Q/K/A）</div>
-              <div class="won" id="seat0-won">—</div>
-            </div>
-          </section>
+      <div class="buttons">
+        <button id="btnStart">はじめる</button>
+        <button id="btnTrophy">トロフィー</button>
+        <button id="btnHelp">説明</button>
+        <button id="btnCredits">クレジット</button>
+      </div>
 
-          <section id="seat1" class="player">
-            <div class="player-head">
-              <div class="player-name">
-                <img id="seat1-avatar" class="avatar" alt="ジャンヌ" />
-                <span id="seat1-name">ジャンヌ</span>
-                <span id="seat1-role" class="role"></span>
-                <span id="seat1-dep" class="role"></span>
-              </div>
-              <div class="player-meta" id="seat1-meta">-</div>
-            </div>
-            <div class="won-wrap">
-              <div class="muted small">獲得（得点札：10/J/Q/K/A）</div>
-              <div class="won" id="seat1-won">—</div>
-            </div>
-          </section>
+      <div class="small">
+        <div>ローカル対戦なし（1人＋CPU4）</div>
+        <div>GitHub Pages公開想定 / HTML・CSS・JSのみ</div>
+      </div>
+    </div>
+  </section>
 
-          <section id="seat2" class="player">
-            <div class="player-head">
-              <div class="player-name">
-                <img id="seat2-avatar" class="avatar" alt="ヴィクトリア" />
-                <span id="seat2-name">ヴィクトリア</span>
-                <span id="seat2-role" class="role"></span>
-                <span id="seat2-dep" class="role"></span>
-              </div>
-              <div class="player-meta" id="seat2-meta">-</div>
-            </div>
-            <div class="won-wrap">
-              <div class="muted small">獲得（得点札：10/J/Q/K/A）</div>
-              <div class="won" id="seat2-won">—</div>
-            </div>
-          </section>
+  <!-- SELECT -->
+  <section id="scene-select" class="scene hidden">
+    <div class="panel">
+      <h2>キャラクター選択</h2>
+      <div id="selectGrid" class="select-grid"></div>
+      <div class="buttons">
+        <button id="btnSelectBack">戻る</button>
+      </div>
+    </div>
+  </section>
 
-          <section id="seat3" class="player">
-            <div class="player-head">
-              <div class="player-name">
-                <img id="seat3-avatar" class="avatar" alt="ルイーゼ" />
-                <span id="seat3-name">ルイーゼ</span>
-                <span id="seat3-role" class="role"></span>
-                <span id="seat3-dep" class="role"></span>
-              </div>
-              <div class="player-meta" id="seat3-meta">-</div>
-            </div>
-            <div class="won-wrap">
-              <div class="muted small">獲得（得点札：10/J/Q/K/A）</div>
-              <div class="won" id="seat3-won">—</div>
-            </div>
-          </section>
+  <!-- HELP -->
+  <section id="scene-help" class="scene hidden">
+    <div class="panel">
+      <h2>説明（イザベル）</h2>
+      <div id="helpText" class="help-text"></div>
+      <div class="buttons">
+        <button class="btnBackTitle">戻る</button>
+      </div>
+    </div>
+  </section>
 
-          <section id="seat4" class="player">
-            <div class="player-head">
-              <div class="player-name">
-                <img id="seat4-avatar" class="avatar" alt="カチューシャ" />
-                <span id="seat4-name">カチューシャ</span>
-                <span id="seat4-role" class="role"></span>
-                <span id="seat4-dep" class="role"></span>
-              </div>
-              <div class="player-meta" id="seat4-meta">-</div>
-            </div>
-            <div class="won-wrap">
-              <div class="muted small">獲得（得点札：10/J/Q/K/A）</div>
-              <div class="won" id="seat4-won">—</div>
-            </div>
-          </section>
+  <!-- TROPHY -->
+  <section id="scene-trophy" class="scene hidden">
+    <div class="panel">
+      <h2>トロフィー</h2>
+      <div id="trophyGrid" class="trophy-grid"></div>
+      <div class="buttons">
+        <button class="btnBackTitle">戻る</button>
+      </div>
+    </div>
+  </section>
 
-          <section id="center" class="center">
-            <div class="center-head">
-              <div class="center-title">場（トリック）</div>
-              <div id="trick-info" class="muted small">-</div>
+          <!-- SELECT CHARACTER -->
+        <section id="scene-select" class="scene">
+          <div class="panel">
+            <h2>キャラクター選択</h2>
+            <div id="selectGrid" class="select-grid"></div>
+            <div class="buttons">
+              <button id="btnSelectBack">戻る</button>
             </div>
-
-            <div id="trick" class="trick" aria-label="Current trick">
-              <div class="slot"><div class="slot-name" id="slotname-0">マリア</div><div class="slot-card" id="slot-0">—</div></div>
-              <div class="slot"><div class="slot-name" id="slotname-1">ジャンヌ</div><div class="slot-card" id="slot-1">—</div></div>
-              <div class="slot"><div class="slot-name" id="slotname-2">ヴィクトリア</div><div class="slot-card" id="slot-2">—</div></div>
-              <div class="slot"><div class="slot-name" id="slotname-3">ルイーゼ</div><div class="slot-card" id="slot-3">—</div></div>
-              <div class="slot"><div class="slot-name" id="slotname-4">カチューシャ</div><div class="slot-card" id="slot-4">—</div></div>
-            </div>
-
-            <div class="log">
-              <div class="log-head">ログ（最新が上）</div>
-              <div id="log" class="log-body" aria-live="polite"></div>
-            </div>
-          </section>
-        </div>
-
-        <section id="hand-panel" class="hand-panel" aria-label="Your hand panel">
-          <div class="hand-head">
-            <div class="hand-who">
-              <img id="hand-avatar" class="avatar" alt="あなた" />
-              <div>
-                <div id="hand-name" class="hand-name">あなた</div>
-                <div id="hand-meta" class="muted small">-</div>
-              </div>
-            </div>
-          </div>
-          <div class="hand-wrap">
-            <div class="muted small">手札（クリックで出す）</div>
-            <div id="hand" class="hand" aria-label="Your hand"></div>
           </div>
         </section>
-      </main>
-    </section>
 
-    <!-- Result -->
-    <section id="scene-result" class="scene" aria-labelledby="result-heading">
-      <div class="panel">
-        <h1 id="result-heading">結果</h1>
-        <div id="result-head" class="result-head">—</div>
-        <div id="result-grid" class="result-grid" aria-label="Result list"></div>
+                  <!-- GAME -->
+        <section id="scene-game" class="scene">
+          <div class="game-layout">
+            <aside class="left">
+              <div class="panel">
+                <h2 id="phaseTitle">準備中</h2>
+                <div id="phaseBody" class="phase-body"></div>
+              </div>
 
-        <div class="row">
-          <button id="btn-result-to-title" class="primary">スタートへ戻る</button>
-          <button id="btn-result-new" class="ghost">もう一回</button>
+              <div class="panel compact">
+                <h3>ログ</h3>
+                <div id="log" class="log"></div>
+              </div>
+            </aside>
+
+            <section class="center">
+              <div class="panel">
+                <div class="trick-head">
+                  <h3 class="trick-title">現在のトリック</h3>
+
+                  <div class="inline-indicators">
+                    <div class="ind-chip">
+                      <div class="ind-k">切り札</div>
+                      <div id="kvTrump" class="ind-v">-</div>
+                    </div>
+                    <div class="ind-chip">
+                      <div class="ind-k">台札</div>
+                      <div id="kvLead" class="ind-v">-</div>
+                    </div>
+                    <div class="ind-chip">
+                      <div class="ind-k">同盟者指定</div>
+                      <div id="kvAllyCard" class="ind-v">-</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="trickTable" class="trick-table"></div>
+              </div>
+
+              <div class="panel">
+                <h3>あなたの手札</h3>
+                <div id="hand" class="hand"></div>
+                <div id="handActions" class="hand-actions"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+
+  <!-- RESULT -->
+  <section id="scene-result" class="scene hidden">
+    <div class="panel">
+      <h2>リザルト</h2>
+      <div id="resultSummary" class="result-summary"></div>
+
+      <h3>皇帝側獲得（実物表示）</h3>
+      <div id="resultImperialCards" class="result-cards"></div>
+
+      <h3>連合軍獲得（実物表示）</h3>
+      <div id="resultCoalitionCards" class="result-cards"></div>
+
+      <div class="buttons">
+        <button id="btnPlayAgain">もう一度</button>
+        <button class="btnBackTitle">タイトルへ</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+      <!-- Cut-in overlay -->
+      <div id="cutin" class="cutin hidden">
+        <div class="cutin-inner">
+          <div class="cutin-head">
+            <div id="cutinTitle" class="cutin-title">-</div>
+            <div id="cutinClose" class="cutin-close">×</div>
+          </div>
+          <div class="cutin-body">
+            <div id="cutinIcon" class="cutin-icon"></div>
+            <div id="cutinText" class="cutin-text">-</div>
+          </div>
+          <div class="cutin-foot">クリック/タップで閉じる</div>
         </div>
       </div>
-    </section>
 
-
-
-
-  </div>
-      <!-- Cut-in (overlay) -->
-<div id="cutin" class="cutin hidden" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="cutin-window">
-    <img id="cutin-avatar" class="cutin-avatar" alt="" />
-    <div class="cutin-body">
-      <div id="cutin-name" class="cutin-name"></div>
-      <div id="cutin-text" class="cutin-text"></div>
-      <div class="muted small" style="margin-top:10px;">クリック/タップで閉じる</div>
+      <!-- Credits popup -->
+      <div id="popup" class="popup hidden">
+        <div class="popup-inner">
+          <div class="popup-head">
+            <div id="popupTitle" class="popup-title">-</div>
+            <button id="popupClose" class="popup-close">閉じる</button>
+          </div>
+          <div id="popupBody" class="popup-body"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
