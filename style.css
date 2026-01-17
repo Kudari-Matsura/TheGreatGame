@@ -181,15 +181,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   color: rgba(233,237,245,92);
 }
 
-.select-grid{
-  display:grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-top: 12px;
-}
-@media (max-width: 980px){
-  .select-grid{ grid-template-columns: repeat(2, 1fr); }
-}
 .select-card{
   cursor:pointer;
   border:1px solid rgba(255,255,255,.14);
@@ -216,18 +207,33 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
 .game-layout{
   height:100%;
+  min-height: 0;
   display:grid;
   grid-template-columns: 380px 1fr;
   gap: 12px;
 }
+
 .left{
   display:flex;
   flex-direction:column;
   gap: 12px;
+
   height: 100%;
-  overflow: auto;
+  min-height: 0;
+
+  /* left自体はスクロールさせない */
+  overflow: hidden;
+
   padding-right: 6px;
 }
+
+/* 左カラム：上（状況表示）は内容分、下（ログ）が残り高さを使う */
+.left > .panel{ flex: 0 0 auto; }
+.left > .panel.compact{
+  flex: 1 1 auto;
+  min-height: 0; /* これが無いと中身が縮まず、leftが押し出される */
+}
+
 .center{
   display:flex;
   flex-direction:column;
@@ -237,16 +243,16 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   padding-right: 6px;
 }
 .log{
-  height: 260px;
-  min-height: 260px;
-  max-height: 260px;
+  height: 100%;
+  max-height: none;
 
-  overflow:auto;
+  overflow:auto; /* スクロールはログ内だけ */
   display:flex;
-  flex-direction:column; /* 逆順にしない */
+  flex-direction:column; /* ログ順はJS側のprepend等に合わせる */
   gap: 6px;
   padding-right: 8px;
 }
+
 
 .log-line{
   font-size: 12px;
@@ -269,10 +275,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .score-cards{ display:flex; flex-wrap:wrap; gap: 6px; min-height: 24px; }
 
 .phase-body{
-  min-height: 108px;
-  max-height: 220px;
+  min-height: 96px;
+  max-height: 200px;  /* 220 → 200 にしてLeft全体を少し短く */
   overflow: auto;
-  color: rgba(233,237,245,.92);
+  color: rgba(233,237,245,92);
   white-space: pre-wrap;
 }
 
@@ -351,41 +357,37 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 }
 
 .help-panel{
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  display:flex;
+  flex-direction:column;
   gap: 10px;
-  padding-bottom: 54px; /* 下部UI(閉じる/ページ)の分 */
+
+  /* 枠を固定サイズで運用している前提（前回の改造を維持） */
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .help-text{
   flex: 1;
+  min-height: 0;
   overflow: auto;
-  max-height: 62vh;
+  max-height: none;
 }
 
 .help-nav{
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  display: flex;
+  display:flex;
   gap: 10px;
 }
 
 .help-page-indicator{
-  position: absolute;
-  right: 16px;
-  bottom: 18px;
   font-size: 12px;
   font-weight: 850;
-  color: rgba(233,237,245,.65);
+  color: rgba(233,237,245,65);
+  white-space: nowrap;
 }
 
 .help-close{
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
+  display:none;
 }
 
 .help-title{
@@ -424,13 +426,16 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   position: relative;
   overflow: hidden;
 
-  border:1px solid rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,14);
   border-radius: 18px;
 
   /* 背景は立ち絵に任せる */
-  background: rgba(0,0,0,.18);
+  background: rgba(0,0,0,18);
 
-  min-height: 320px;
+  /* 9:16で縦を確保（枠を下に伸ばす） */
+  aspect-ratio: 9 / 16;
+  min-height: 410px;
+
   padding: 12px;
 }
 
@@ -459,6 +464,7 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .trophy-content{
   position: relative;
   z-index: 2;
+  height: 100%; /* 冠を絶対配置できるように */
 }
 
 .trophy-top{ display:flex; gap: 10px; align-items:center; }
@@ -471,7 +477,18 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 }
 .trophy-name{ font-weight: 950; }
 
-.crowns{ display:flex; gap: 8px; margin-top: 10px; flex-wrap:wrap; }
+.crowns{
+  position: absolute;
+  left: 12px;
+  right: 12px;
+
+  /* 「中下段ぐらい」へ下げる */
+  bottom: 42px;
+
+  display:flex;
+  gap: 8px;
+  flex-wrap:wrap;
+}
 
 .crown{
   display:flex;
@@ -641,16 +658,17 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .char-points{
   display:flex;
   flex-wrap:wrap;
-  gap: 6px;
+  gap: 3px;          /* 詰める */
   min-height: 24px;
 }
 .char-point-pill{
-  padding: 4px 8px;
+  padding: 2px 6px;  /* 詰める */
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.20);
+  border: 1px solid rgba(255,255,255,16);
+  background: rgba(0,0,0,20);
   font-weight: 900;
-  font-size: 12px;
+  font-size: 11px;   /* 少し小さくして7枚入りやすく */
+  line-height: 1.1;
 }
 
 .trick-row{
@@ -735,38 +753,60 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 /* Character select */
 .select-grid{
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+
+  /* 画面の縦を使ってカードが潰れないようにする */
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: start;
 }
+
+@media (max-width: 980px){
+  .select-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .select-card{
   cursor:pointer;
+  border:1px solid rgba(255,255,255,14);
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.25);
+  background: rgba(0,0,0,20);
   padding: 10px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  /* 余計な行（hint等）で高さを食わない */
+  gap: 0;
 }
+
+.select-card:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,28); }
+
 .select-card .icon{
-  width:100%;
+  width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow:hidden;
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,18);
+  background: rgba(0,0,0,18);
 }
-.select-card img{
+
+.select-card .icon img{
   width:100%;
   height:100%;
-  object-fit: cover;
+  object-fit: contain; /* 見切れずに全体表示 */
   display:block;
 }
+
 .select-card .name{
-  margin-top: 8px;
+  margin-top: 14px;   /* キャラ名をもう少し下へ */
   font-weight: 900;
+  text-align:center;
 }
-.select-card .hint{
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(233,237,245,.70);
-}
+
+.select-card .hint{ display:none; }
 
 .hidden{ display:none !important; }
 .scene.hidden{ display:none !important; }
@@ -774,6 +814,29 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .char-point-pill.is-special,
 .card-pill.is-special{
   border: 1px solid rgba(255, 215, 0, 0.75);
+}
+
+.panel-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.help-topbar{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+#scene-select > .panel{
+  height: 100%;
+  display:flex;
+  flex-direction:column;
+  min-height: 0;
+}
+#scene-select > .panel > .buttons{
+  margin-top: 10px;
 }
 
 @media (max-width: 760px){

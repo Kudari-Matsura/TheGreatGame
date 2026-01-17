@@ -130,7 +130,6 @@ function promptCharacterSelect() {
       card.innerHTML = `
         <div class="icon"><img src="${iconUrlOf(name)}" alt="${name}"></div>
         <div class="name">${name}</div>
-        <div class="hint">${pid === 0 ? "皇帝競りは先手" : ""}</div>
       `.trim();
 
       const onPick = () => {
@@ -986,9 +985,11 @@ async function phaseResult() {
   rebuildFactionPoints();
   const impCount = extractPointCards(G.faction.imperial.point).length;
 
+  // 通常勝利（いったん計算はするが、特殊勝利が成立したら上書きされる）
   const emperorSideWin = (impCount >= bidCount);
   const normalWinnerFaction = emperorSideWin ? "皇帝側" : "連合軍";
 
+  // 特殊勝利（個人）判定：成立者を全員集める
   const specials = [];
   for (let pid = 0; pid < 5; pid++) {
     const name = players[pid].name;
@@ -996,11 +997,8 @@ async function phaseResult() {
     if (res) specials.push({ pid, name, title: res });
   }
 
-  let specialWinner = null;
-  if (specials.length > 0) {
-    specials.sort((a, b) => CHARS.indexOf(a.name) - CHARS.indexOf(b.name));
-    specialWinner = specials[0];
-  }
+  // 仕様：複数人が満たしたら「特殊勝利は発生しない」
+  const specialWinner = (specials.length === 1) ? specials[0] : null;
 
   // リザルト文
   let summary = "";
@@ -1008,32 +1006,32 @@ async function phaseResult() {
   summary += `皇帝：${players[emperor].name}\n`;
   summary += `同盟者：${G.ally.known ? (players[ally]?.name ?? "不明") : "最後まで不明"}\n`;
   summary += `皇帝側得点札：${impCount}枚 / 必要：${bidCount}枚\n`;
-  summary += `通常勝利：${normalWinnerFaction}\n`;
+
   if (specialWinner) {
-    summary += `\n特殊勝利：${specialWinner.name}「${specialWinner.title}」\n`;
-    summary += `（特殊勝利は通常勝利より優先）\n`;
+    summary += `勝利：特殊勝利（${specialWinner.name}「${specialWinner.title}」）\n`;
+  } else {
+    summary += `勝利：${normalWinnerFaction}\n`;
   }
 
-  // リザルト一覧：カードに ownerName を付与して渡す（UIで「誰の特殊勝利札か」を判定できるようにする）
-  const imperialCards = [];
-  const coalitionCards = [];
-  for (let pid = 0; pid < 5; pid++) {
-    const isImp = (pid === emperor) || (ally != null && pid === ally);
-    const pts = extractPointCards(G.captured[pid].point);
-    for (const c of pts) {
-      const item = { ...c, ownerName: players[pid].name };
-      if (isImp) imperialCards.push(item);
-      else coalitionCards.push(item);
-    }
-  }
+  const impCards = extractPointCards(G.faction.imperial.point);
+  const coaCards = extractPointCards(G.faction.coalition.point);
 
-  renderResult(ui, { summary, imperialCards, coalitionCards });
+  renderResult(ui, { summary, imperialCards: impCards, coalitionCards: coaCards });
 
   showScene(ui, "result");
   updateTopFrames();
   updateIndicators();
 
-  // 勝利セリフ（クリックで消える）
+  // カットイン（クリックで消える）
+  if (specialWinner) {
+    const saySp = DIALOG.getSpecialWin(specialWinner.name);
+    const title = `特殊勝利（${specialWinner.title}）`;
+    showCutin(ui, { title, text: saySp.text, iconName: saySp.by });
+    await waitCutinDismiss();
+    return;
+  }
+
+  // 通常勝利のみ
   const coalitionNames = [];
   for (let pid = 0; pid < 5; pid++) {
     const isImp = (pid === emperor) || (ally != null && pid === ally);
@@ -1045,18 +1043,9 @@ async function phaseResult() {
     coalitionNames,
   });
 
-  // タイトルを出し分け
   const normalTitle = emperorSideWin ? "皇帝側勝利" : "連合軍勝利";
   showCutin(ui, { title: normalTitle, text: sayWin.text, iconName: sayWin.by });
   await waitCutinDismiss();
-
-  // 特殊勝利セリフ（成立していれば、クリックで消える）
-  if (specialWinner) {
-    const saySp = DIALOG.getSpecialWin(specialWinner.name);
-    const spTitle = `特殊勝利（${specialWinner.title}）`;
-    showCutin(ui, { title: spTitle, text: saySp.text, iconName: saySp.by });
-    await waitCutinDismiss();
-  }
 }
 
 // ====== タイトル初期描画 ======

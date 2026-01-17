@@ -263,31 +263,36 @@ export function extractPointCards(cards) {
 
 // 特殊勝利（個人）
 export function checkSpecialVictoryForPlayer(charName, capturedPointCards) {
-  // 「◯◯をN枚のみ」= そのランクだけが条件枚数で、他の得点札は0
-  const need = specialNeedRank(charName);
-  const counts = { 10: 0, 11: 0, 12: 0, 13: 0, 14: 0 };
-  for (const c of capturedPointCards) counts[c.rank]++;
+  // 仕様：
+  // - そのキャラに対応する「指定ランク」だけが、指定枚数"ちょうど"であること
+  // - それ以外の得点札（10/J/Q/K/A）は何枚持っていてもOK
+  // - ジョーカーは得点札ではない前提だが、混ざっても無視する
 
-  const totalPoint = Object.values(counts).reduce((a, b) => a + b, 0);
+  const need = specialNeedRank(charName);
+  if (!need) return null;
+
+  let needCount = 0;
+  for (const c of capturedPointCards) {
+    if (!c || c.isJoker) continue;
+    if (c.rank === need) needCount++;
+  }
 
   if (charName === "マリア") {
-    return (counts[13] === 2 && totalPoint === 2) ? "Königin Kaiserin" : null;
+    return (needCount === 2) ? "Königin Kaiserin" : null; // Kを2枚
   }
   if (charName === "ジャンヌ") {
-    return (counts[10] === 3 && totalPoint === 3) ? "三銃士" : null;
+    return (needCount === 3) ? "三銃士" : null; // 10を3枚
   }
   if (charName === "ヴィクトリア") {
-    return (counts[11] === 4 && totalPoint === 4) ? "ユニオンジャック" : null;
+    return (needCount === 4) ? "ユニオンジャック" : null; // Jを4枚
   }
   if (charName === "ルイーゼ") {
-    return (counts[14] === 1 && totalPoint === 1) ? "単頭の鷲" : null;
+    return (needCount === 1) ? "単頭の鷲" : null; // Aを1枚
   }
   if (charName === "カチューシャ") {
-    return (counts[12] === 4 && totalPoint === 4) ? "ロマノフ四女帝" : null;
+    return (needCount === 4) ? "ロマノフ四女帝" : null; // Qを4枚
   }
 
-  // 既知以外
-  if (need) return null;
   return null;
 }
 

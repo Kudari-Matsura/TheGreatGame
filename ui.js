@@ -385,13 +385,17 @@ export function setTopFrames(ui, players, gameState) {
 }
 
 export function setIndicators(ui, { trumpSuit, leadSuit, allySpec, allyKnown }) {
+  const suitClass = (suit) => {
+    return suit === "C" ? "suitC"
+      : suit === "D" ? "suitD"
+      : suit === "H" ? "suitH"
+      : suit === "S" ? "suitS"
+      : "";
+  };
+
   const suitSpan = (suit) => {
     if (!suit) return "-";
-    const cls =
-      suit === "C" ? "suitC" :
-      suit === "D" ? "suitD" :
-      suit === "H" ? "suitH" :
-      suit === "S" ? "suitS" : "";
+    const cls = suitClass(suit);
     return `<span class="${cls}">${SUIT_LABEL[suit]}</span>`;
   };
 
@@ -410,7 +414,8 @@ export function setIndicators(ui, { trumpSuit, leadSuit, allySpec, allyKnown }) 
       const t = spec.jokerColor === "R" ? "赤JOKER" : "黒JOKER";
       return `<span class="${cls}">${t}</span>`;
     }
-    return `${suitSpan(spec.suit)}${rankText(spec.rank)}`;
+    const cls = suitClass(spec.suit);
+    return `<span class="${cls}">${SUIT_LABEL[spec.suit]}${rankText(spec.rank)}</span>`;
   };
 
   ui.kvTrump.innerHTML = trumpSuit ? suitSpan(trumpSuit) : "-";

@@ -47,34 +47,36 @@
   <!-- HELP -->
 <section id="scene-help" class="scene hidden">
   <div class="panel help-panel">
-    <h2>説明</h2>
+    <div class="panel-topbar">
+      <h2>説明</h2>
+
+      <div class="help-topbar">
+        <div class="help-nav">
+          <button id="btnHelpPrev">◁</button>
+          <button id="btnHelpNext">▷</button>
+        </div>
+
+        <div id="helpPageIndicator" class="help-page-indicator">1/11</div>
+
+        <button id="btnHelpClose">閉じる</button>
+      </div>
+    </div>
 
     <div id="helpText" class="help-text"></div>
-
-    <div class="help-nav">
-      <button id="btnHelpPrev">◁</button>
-      <button id="btnHelpNext">▷</button>
-    </div>
-
-    <div id="helpPageIndicator" class="help-page-indicator">1/11</div>
-
-    <div class="help-close">
-      <button id="btnHelpClose">閉じる</button>
-    </div>
   </div>
 </section>
 
-
-  <!-- TROPHY -->
-  <section id="scene-trophy" class="scene hidden">
-    <div class="panel">
+<!-- TROPHY -->
+<section id="scene-trophy" class="scene hidden">
+  <div class="panel">
+    <div class="panel-topbar">
       <h2>トロフィー</h2>
-      <div id="trophyGrid" class="trophy-grid"></div>
-      <div class="buttons">
-        <button class="btnBackTitle">戻る</button>
-      </div>
+      <button class="btnBackTitle">閉じる</button>
     </div>
-  </section>
+
+    <div id="trophyGrid" class="trophy-grid"></div>
+  </div>
+</section>
 
           <!-- SELECT CHARACTER -->
         <section id="scene-select" class="scene">
