@@ -781,13 +781,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 }
 
 /* 小画面：左を折りたたむ方向の逃げ */
-@media (max-width: 980px){
+/* 小画面：縦向きのときだけ左を折りたたむ（横向きはPCと同じ2カラム維持） */
+@media (max-width: 980px) and (orientation: portrait){
   .game-layout{ grid-template-columns: 1fr; }
-  .log{
-    height: 210px;
-    min-height: 210px;
-    max-height: 210px;
-  }
+  .log{ height: 210px; }
 }
 
 /* モバイル：ボタンや文字サイズ */
