@@ -177,7 +177,8 @@ export function cpuDecideAimSpecial(charName, hand10, trumpSuit) {
     const lj = leftJack(trumpSuit);
     const hasRJ = rj && hand10.some(c => !c.isJoker && c.suit === rj.suit && c.rank === rj.rank);
     const hasLJ = lj && hand10.some(c => !c.isJoker && c.suit === lj.suit && c.rank === lj.rank);
-    return !!(hasRJ && hasLJ);
+    // 修正：両方必須 → どちらかでOK
+    return !!(hasRJ || hasLJ);
   }
   if (charName === "ルイーゼ") {
     return hand10.some(c => !c.isJoker && c.suit === trumpSuit && c.rank === 14);

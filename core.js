@@ -115,7 +115,7 @@ export function compareBid(a, b) {
 
 export function bidToText(bid) {
   if (!bid) return "パス";
-  return `${bid.count}（${SUIT_LABEL[bid.suit]}）`;
+  return `（${SUIT_LABEL[bid.suit]}）${bid.count}`;
 }
 
 // 右/左ジャック

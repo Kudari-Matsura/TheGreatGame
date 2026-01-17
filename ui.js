@@ -552,27 +552,24 @@ export async function promptHumanBid(ui, { currentBidText, minCount = 13 }) {
 
     const info = document.createElement("div");
     info.style.color = "rgba(233,237,245,.88)";
+    info.style.fontSize = "clamp(16px, 2.2vw, 20px)";
     info.textContent = `現在の最高入札：${currentBidText}`;
 
-    const countSel = document.createElement("select");
-    countSel.style.padding = "10px 12px";
-    countSel.style.borderRadius = "12px";
-    countSel.style.border = "1px solid rgba(255,255,255,.2)";
-    countSel.style.background = "rgba(0,0,0,.22)";
-    countSel.style.color = "rgba(233,237,245,.95)";
-    for (let c = min; c <= 20; c++) {
-      const o = document.createElement("option");
-      o.value = String(c);
-      o.textContent = String(c);
-      countSel.appendChild(o);
-    }
+    const applySelectStyle = (sel) => {
+      sel.style.padding = "14px 16px";
+      sel.style.borderRadius = "14px";
+      sel.style.border = "1px solid rgba(255,255,255,.25)";
+      sel.style.background = "rgba(0,0,0,.28)";
+      sel.style.color = "rgba(233,237,245,.98)";
+      sel.style.fontSize = "clamp(18px, 3.2vw, 24px)";
+      sel.style.minHeight = "52px";
+      sel.style.lineHeight = "1.2";
+      sel.style.maxWidth = "100%";
+    };
 
+    // 記号（スート）を先に
     const suitSel = document.createElement("select");
-    suitSel.style.padding = "10px 12px";
-    suitSel.style.borderRadius = "12px";
-    suitSel.style.border = "1px solid rgba(255,255,255,.2)";
-    suitSel.style.background = "rgba(0,0,0,.22)";
-    suitSel.style.color = "rgba(233,237,245,.95)";
+    applySelectStyle(suitSel);
     const suits = ["C", "D", "H", "S"];
     for (const s of suits) {
       const o = document.createElement("option");
@@ -581,9 +578,22 @@ export async function promptHumanBid(ui, { currentBidText, minCount = 13 }) {
       suitSel.appendChild(o);
     }
 
+    // 枚数（カウント）を後に
+    const countSel = document.createElement("select");
+    applySelectStyle(countSel);
+    for (let c = min; c <= 20; c++) {
+      const o = document.createElement("option");
+      o.value = String(c);
+      o.textContent = String(c);
+      countSel.appendChild(o);
+    }
+
     const btnBid = document.createElement("button");
+    btnBid.className = "btn";
     btnBid.textContent = "入札する";
+
     const btnPass = document.createElement("button");
+    btnPass.className = "btn";
     btnPass.textContent = "パス";
 
     btnBid.addEventListener("click", () => {
@@ -596,8 +606,8 @@ export async function promptHumanBid(ui, { currentBidText, minCount = 13 }) {
     });
 
     wrap.appendChild(info);
-    wrap.appendChild(countSel);
-    wrap.appendChild(suitSel);
+    wrap.appendChild(suitSel);  // 記号 → 
+    wrap.appendChild(countSel); // 枚数
     wrap.appendChild(btnBid);
     wrap.appendChild(btnPass);
     ui.handActions.appendChild(wrap);
@@ -620,6 +630,18 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     return String(r);
   };
 
+  const applySelectStyle = (sel) => {
+    sel.style.padding = "14px 16px";
+    sel.style.borderRadius = "14px";
+    sel.style.border = "1px solid rgba(255,255,255,.25)";
+    sel.style.background = "rgba(0,0,0,.32)";
+    sel.style.color = "rgba(233,237,245,.98)";
+    sel.style.fontSize = "clamp(18px, 3.2vw, 24px)";
+    sel.style.minHeight = "52px";
+    sel.style.lineHeight = "1.2";
+    sel.style.maxWidth = "100%";
+  };
+
   return await new Promise((resolve) => {
     ui.handActions.innerHTML = "";
 
@@ -629,7 +651,42 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     wrap.style.gap = "10px";
 
     const info = document.createElement("div");
-    info.textContent = "同盟者指定カードを選択（任意指定）";
+    info.textContent = "同盟者指定カードを選択（手札から／任意指定）";
+    info.style.fontSize = "clamp(16px, 2.2vw, 20px)";
+
+    // 手札から
+    const handRow = document.createElement("div");
+    handRow.style.display = "flex";
+    handRow.style.flexWrap = "wrap";
+    handRow.style.gap = "6px";
+    handRow.style.alignItems = "center";
+
+    const handLabel = document.createElement("div");
+    handLabel.style.fontSize = "clamp(14px, 2.0vw, 18px)";
+    handLabel.style.color = "rgba(233,237,245,.72)";
+    handLabel.textContent = "手札から：";
+    handRow.appendChild(handLabel);
+
+    const handCards = Array.isArray(hand) ? hand.slice() : [];
+    if (handCards.length === 0) {
+      const none = document.createElement("div");
+      none.style.fontSize = "clamp(14px, 2.0vw, 18px)";
+      none.style.color = "rgba(233,237,245,.55)";
+      none.textContent = "（手札がありません）";
+      handRow.appendChild(none);
+    } else {
+      for (const c of handCards) {
+        const b = document.createElement("button");
+        b.className = "card-btn small";
+        b.innerHTML = `<div class="t ${cardSuitClass(c)}">${cardText(c)}</div>`;
+        b.addEventListener("click", () => {
+          if (c.isJoker) resolve({ isJoker: true, jokerColor: c.jokerColor });
+          else resolve({ suit: c.suit, rank: c.rank });
+          ui.handActions.innerHTML = "";
+        });
+        handRow.appendChild(b);
+      }
+    }
 
     // 任意指定（通常カード）
     const freeRow = document.createElement("div");
@@ -639,16 +696,12 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     freeRow.style.alignItems = "center";
 
     const freeLabel = document.createElement("div");
-    freeLabel.style.fontSize = "12px";
-    freeLabel.style.color = "rgba(233,237,245,0.72)";
+    freeLabel.style.fontSize = "clamp(14px, 2.0vw, 18px)";
+    freeLabel.style.color = "rgba(233,237,245,.72)";
     freeLabel.textContent = "任意指定（通常カード）：";
 
     const suitSel = document.createElement("select");
-    suitSel.style.padding = "8px 10px";
-    suitSel.style.borderRadius = "12px";
-    suitSel.style.border = "1px solid rgba(255,255,255,0.2)";
-    suitSel.style.background = "rgba(0,0,0,0.35)";
-    suitSel.style.color = "rgba(233,237,245,0.95)";
+    applySelectStyle(suitSel);
     for (const s of SUITS_LOCAL) {
       const o = document.createElement("option");
       o.value = s;
@@ -657,11 +710,7 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     }
 
     const rankSel = document.createElement("select");
-    rankSel.style.padding = "8px 10px";
-    rankSel.style.borderRadius = "12px";
-    rankSel.style.border = "1px solid rgba(255,255,255,0.2)";
-    rankSel.style.background = "rgba(0,0,0,0.35)";
-    rankSel.style.color = "rgba(233,237,245,0.95)";
+    applySelectStyle(rankSel);
     for (let r = 2; r <= 14; r++) {
       const o = document.createElement("option");
       o.value = String(r);
@@ -690,8 +739,8 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     jokerRow.style.alignItems = "center";
 
     const jokerLabel = document.createElement("div");
-    jokerLabel.style.fontSize = "12px";
-    jokerLabel.style.color = "rgba(233,237,245,0.72)";
+    jokerLabel.style.fontSize = "clamp(14px, 2.0vw, 18px)";
+    jokerLabel.style.color = "rgba(233,237,245,.72)";
     jokerLabel.textContent = "任意指定（ジョーカー）：";
 
     const redBtn = document.createElement("button");
@@ -715,13 +764,13 @@ export async function promptHumanAllySpec(ui, { hand } = {}) {
     jokerRow.appendChild(blackBtn);
 
     wrap.appendChild(info);
+    wrap.appendChild(handRow);
     wrap.appendChild(freeRow);
     wrap.appendChild(jokerRow);
 
     ui.handActions.appendChild(wrap);
   });
 }
-
 
 /** 皇帝交換：14枚から4枚捨てる（人間） */
 export async function promptHumanDiscard4(ui, hand14) {
