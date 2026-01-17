@@ -16,25 +16,22 @@
       </header>
 
       <main id="main">
+
   <!-- TITLE -->
-  <section id="scene-title" class="scene active">
-    <div class="panel title-panel">
-      <h1>The Great Game</h1>
-      <p class="subtitle">16〜19世紀のヨーロッパの5帝国を擬人化した少女たちのナポレオン</p>
+<section id="scene-title" class="scene">
+  <div class="panel title-panel">
+    <h1 class="title-big">The Great Game</h1>
+    <p class="recommend">スマートフォン環境の場合、横画面推奨</p>
 
-      <div class="buttons">
-        <button id="btnStart">はじめる</button>
-        <button id="btnTrophy">トロフィー</button>
-        <button id="btnHelp">説明</button>
-        <button id="btnCredits">クレジット</button>
-      </div>
-
-      <div class="small">
-        <div>ローカル対戦なし（1人＋CPU4）</div>
-        <div>GitHub Pages公開想定 / HTML・CSS・JSのみ</div>
-      </div>
+    <div class="buttons">
+      <button id="btnStart">はじめる</button>
+      <button id="btnTrophy">トロフィー</button>
+      <button id="btnHelp">説明</button>
+      <button id="btnCredits">クレジット</button>
     </div>
-  </section>
+  </div>
+</section>
+
 
   <!-- SELECT -->
   <section id="scene-select" class="scene hidden">
@@ -48,15 +45,25 @@
   </section>
 
   <!-- HELP -->
-  <section id="scene-help" class="scene hidden">
-    <div class="panel">
-      <h2>説明（イザベル）</h2>
-      <div id="helpText" class="help-text"></div>
-      <div class="buttons">
-        <button class="btnBackTitle">戻る</button>
-      </div>
+<section id="scene-help" class="scene hidden">
+  <div class="panel help-panel">
+    <h2>説明</h2>
+
+    <div id="helpText" class="help-text"></div>
+
+    <div class="help-nav">
+      <button id="btnHelpPrev">◁</button>
+      <button id="btnHelpNext">▷</button>
     </div>
-  </section>
+
+    <div id="helpPageIndicator" class="help-page-indicator">1/11</div>
+
+    <div class="help-close">
+      <button id="btnHelpClose">閉じる</button>
+    </div>
+  </div>
+</section>
+
 
   <!-- TROPHY -->
   <section id="scene-trophy" class="scene hidden">

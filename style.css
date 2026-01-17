@@ -16,6 +16,9 @@
 
   --baseW: 1280;
   --baseH: 720;
+
+  /* キャラ枠背景画像の透明度（0〜1） */
+  --charIconOpacity: 0.32;
 }
 
 *{ box-sizing: border-box; }
@@ -44,7 +47,7 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   /* 背景を「より不透明に＝暗い被せ」を弱めて画像を見せる */
   background-image:
     linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.22)),
-    url("./assets/bg.jpg");
+    url("./assets/bg.png");
   background-size: cover;
   background-position:center;
 }
@@ -84,8 +87,9 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   border-radius: 18px;
 
   /* JSで background-image を入れる */
-  background: rgba(255,255,255,08);
+  background: rgba(255,255,255,0.08);
   filter: saturate(1.02) contrast(1.02);
+  opacity: var(--charIconOpacity);
   z-index: 0;
 }
 
@@ -142,12 +146,40 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   backdrop-filter: blur(8px);
 }
 .panel.compact{ padding: 12px; }
-.title-panel{ height:100%; display:flex; flex-direction:column; justify-content:center; gap: 12px; text-align:center; }
-.title-panel h1{ margin: 0; letter-spacing: .6px; font-size: 46px; }
+.title-panel{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap: 12px;
+  text-align:center;
+
+  /* 保険：panelクラスが消えても半透明枠が残る */
+  background: var(--panel);
+  border:1px solid rgba(255,255,255,14);
+  border-radius: var(--round);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.title-panel h1{ margin: 0; letter-spacing: .6px; font-size: 64px; }
+
 .subtitle{ margin:0; color: var(--muted); }
 
 .buttons{ display:flex; gap: 10px; justify-content:center; flex-wrap: wrap; margin-top: 6px; }
 .small{ font-size: 12px; color: var(--muted); margin-top: 12px; display:flex; flex-direction:column; gap:4px; }
+
+.title-big{
+  font-weight: 950;
+}
+
+.recommend{
+  margin: 0;
+  font-size: 20px;
+  font-weight: 850;
+  color: rgba(233,237,245,92);
+}
 
 .select-grid{
   display:grid;
@@ -205,13 +237,17 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   padding-right: 6px;
 }
 .log{
+  height: 260px;
+  min-height: 260px;
   max-height: 260px;
+
   overflow:auto;
   display:flex;
-  flex-direction:column-reverse; /* 逆順 */
+  flex-direction:column; /* 逆順にしない */
   gap: 6px;
   padding-right: 8px;
 }
+
 .log-line{
   font-size: 12px;
   line-height: 1.35;
@@ -253,7 +289,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   border: 1px solid rgba(255,255,255,12);
   border-radius: 14px;
   padding: 8px 10px;
-  min-width: 190px;
+
+  /* ここだけ短くする（色/字/余白は維持） */
+  min-width: 150px;
+  flex: 0 0 150px;
 }
 
 
@@ -278,6 +317,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   flex-direction:column;
   gap: 0;
   align-items:center;
+
+  /* 追加：枠の中央に寄せる */
+  justify-content: center;
+  text-align: center;
 }
 
 .card-btn .t{
@@ -307,14 +350,65 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   font-weight: 900;
 }
 
+.help-panel{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 54px; /* 下部UI(閉じる/ページ)の分 */
+}
+
 .help-text{
-  line-height: 1.55;
-  color: rgba(233,237,245,.92);
-  white-space: pre-wrap;
-  background: rgba(0,0,0,.18);
-  border: 1px solid rgba(255,255,255,.12);
-  padding: 10px 12px;
-  border-radius: 14px;
+  flex: 1;
+  overflow: auto;
+  max-height: 62vh;
+}
+
+.help-nav{
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.help-page-indicator{
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  font-size: 12px;
+  font-weight: 850;
+  color: rgba(233,237,245,.65);
+}
+
+.help-close{
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+}
+
+.help-title{
+  font-size: 20px;
+  font-weight: 950;
+  line-height: 1.25;
+  margin-bottom: 10px;
+  color: rgba(233,237,245,.98);
+}
+
+.help-body{
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(233,237,245,.90);
+}
+
+#btnHelpPrev, #btnHelpNext{
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+#btnHelpPrev:disabled, #btnHelpNext:disabled{
+  opacity: .35;
 }
 
 .trophy-grid{
@@ -322,28 +416,107 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
+@media (max-width: 980px){
+  .trophy-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
 .trophy-card{
-  background: var(--panel2);
+  position: relative;
+  overflow: hidden;
+
   border:1px solid rgba(255,255,255,.14);
   border-radius: 18px;
+
+  /* 背景は立ち絵に任せる */
+  background: rgba(0,0,0,.18);
+
+  min-height: 320px;
   padding: 12px;
 }
+
+/* 立ち絵背景 */
+.trophy-illust{
+  position:absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 18%;
+  background-repeat: no-repeat;
+  opacity: .92;
+  filter: saturate(1.04) contrast(1.04);
+  z-index: 0;
+}
+
+/* 読みやすいように暗幕 */
+.trophy-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.58), rgba(0,0,0,.20) 45%, rgba(0,0,0,.62));
+  z-index: 1;
+}
+
+.trophy-content{
+  position: relative;
+  z-index: 2;
+}
+
 .trophy-top{ display:flex; gap: 10px; align-items:center; }
-.trophy-icon{ width: 44px; height: 44px; border-radius: 999px; border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); }
+.trophy-icon{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border:1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+}
 .trophy-name{ font-weight: 950; }
+
 .crowns{ display:flex; gap: 8px; margin-top: 10px; flex-wrap:wrap; }
+
 .crown{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+
   border-radius: 999px;
   padding: 6px 10px;
   border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.18);
+  background: rgba(0,0,0,.22);
   font-size: 12px;
   font-weight: 850;
 }
 .crown.off{ opacity:.35; }
+
+.crown-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 34px; /* 「銅冠」2文字ぶんの幅を確保 */
+}
+
+.crown-img{
+  width: 18px;
+  height: 18px;
+  image-rendering: auto;
+}
+
+.crown-text{
+  white-space: nowrap;
+}
+
 .crown.bronze{ color: #ffdfb2; }
 .crown.silver{ color: #e2f0ff; }
 .crown.gold{ color: #ffeaa7; }
+
+/* トロフィー遷移演出：上から順にフェードイン */
+@keyframes trophyIn{
+  from{ opacity: 0; transform: translateY(-18px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.trophy-card.trophy-in{
+  opacity: 0;
+  animation: trophyIn .38s ease-out forwards;
+}
 
 .cutin{
   position:absolute; inset:0;
@@ -355,13 +528,16 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 }
 .cutin.hidden{ display:none; }
 .cutin-inner{
-  width: 520px;
-  margin-right: 14px;
+  width: 660px;
+  max-width: calc(100% - 32px);
+  margin-right: 18px;
+
   background: rgba(12, 16, 24, .90);
   border:1px solid rgba(255,255,255,.18);
-  border-radius: 22px;
+  border-radius: 24px;
   box-shadow: var(--shadow);
   overflow:hidden;
+
   transform: translateX(120%);
   animation: slideIn .26s ease-out forwards;
 }
@@ -372,33 +548,50 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding: 10px 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255,255,255,.10);
 }
-.cutin-title{ font-weight: 950; }
-.cutin-close{ font-weight: 950; opacity:.65; }
+.cutin-title{
+  font-weight: 950;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.cutin-close{
+  font-weight: 950;
+  font-size: 22px;
+  line-height: 1;
+  opacity:.65;
+}
+
 .cutin-body{
   display:flex;
-  gap: 12px;
-  padding: 12px;
+  gap: 14px;
+  padding: 16px;
 }
+
 .cutin-icon{
-  width: 56px; height: 56px; border-radius: 999px;
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
   border:1px solid rgba(255,255,255,.20);
   background: rgba(255,255,255,.08);
   flex: 0 0 auto;
 }
+
 .cutin-text{
-  line-height: 1.45;
+  font-size: 18px;
+  line-height: 1.55;
   color: rgba(233,237,245,.94);
   white-space: pre-wrap;
 }
+
 .cutin-foot{
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-top: 1px solid rgba(255,255,255,.10);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
+
 
 .popup{
   position:absolute; inset:0;
@@ -578,6 +771,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .hidden{ display:none !important; }
 .scene.hidden{ display:none !important; }
 
+.char-point-pill.is-special,
+.card-pill.is-special{
+  border: 1px solid rgba(255, 215, 0, 0.75);
+}
+
 @media (max-width: 760px){
   .select-grid{ grid-template-columns: repeat(2, 1fr); }
 }
@@ -585,11 +783,16 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 /* 小画面：左を折りたたむ方向の逃げ */
 @media (max-width: 980px){
   .game-layout{ grid-template-columns: 1fr; }
-  .log{ height: 210px; }
+  .log{
+    height: 210px;
+    min-height: 210px;
+    max-height: 210px;
+  }
 }
 
 /* モバイル：ボタンや文字サイズ */
 @media (max-width: 520px){
-  .title-panel h1{ font-size: 38px; }
+  .title-panel h1{ font-size: 44px; }
+  .recommend{ font-size: 18px; }
   button{ padding: 10px 12px; }
 }

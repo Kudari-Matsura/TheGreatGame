@@ -319,22 +319,20 @@ export function stealNeededCardFromWinner(needRank, winnerCapturedPointCards) {
 }
 
 // トロフィー保存
+// トロフィー（このセッションのみ。再読み込みで消える）
+let _trophies = {};
+
 export function trophyKey() {
-  return "tgg_trophies_v1";
+  // 互換のため残す（使わない）
+  return "tgg_trophies_v1_no_persist";
 }
 
 export function loadTrophies() {
-  try {
-    const raw = localStorage.getItem(trophyKey());
-    if (!raw) return {};
-    const obj = JSON.parse(raw);
-    if (!obj || typeof obj !== "object") return {};
-    return obj;
-  } catch {
-    return {};
-  }
+  // 直接参照されても壊れにくいように shallow copy を返す
+  return { ..._trophies };
 }
 
 export function saveTrophies(trophies) {
-  localStorage.setItem(trophyKey(), JSON.stringify(trophies));
+  // ローカル保存はしない（ページ再読み込みで初期化される）
+  _trophies = (trophies && typeof trophies === "object") ? { ...trophies } : {};
 }

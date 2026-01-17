@@ -18,7 +18,7 @@ import {
   promptHumanPlay, attachHumanPlayPick,
   renderScores, renderResult,
   showCutin, hideCutin, showPopup,
-  helpText, creditsText,
+  helpText, creditsText, openHelp, 
   makeDialogue, renderTrophies, updateTrophy, roleText
 } from "./ui.js";
 
@@ -92,7 +92,7 @@ function iconUrlOf(name) {
     "イザベル": "spain",
   };
   const f = ICON_FILE[name];
-  return f ? `./assets/${f}.jpg` : "";
+  return f ? `./assets/${f}.png` : "";
 }
 
 function promptCharacterSelect() {
@@ -148,6 +148,29 @@ function promptCharacterSelect() {
 function bindTitleButtons() {
   const qs = (s) => document.querySelector(s);
 
+  const resetUiToTitle = () => {
+    // 上部キャラ枠（役/得点札）を消す
+    ui.charFrames.innerHTML = "";
+
+    // 進行表示・ログ・手札・トリックを初期状態へ
+    setPhase(ui, "準備中", "");
+    clearLog(ui);
+    renderTrick(ui, players, []);
+    renderHand(ui, [], { disabled: true, onPick: null });
+
+    // インジケータ初期化
+    setIndicators(ui, { trumpSuit: null, leadSuit: null, allySpec: null, allyKnown: false });
+
+    // リザルト表示を初期化
+    if (ui.resultSummary) ui.resultSummary.textContent = "";
+    if (ui.resultImperialCards) ui.resultImperialCards.innerHTML = "";
+    if (ui.resultCoalitionCards) ui.resultCoalitionCards.innerHTML = "";
+
+    // オーバーレイ類を閉じる
+    hideCutin(ui);
+    ui.popup?.classList?.add("hidden");
+  };
+
   qs("#btnStart")?.addEventListener("click", async () => {
     const pid = await promptCharacterSelect();
     if (pid == null) return;
@@ -156,8 +179,7 @@ function bindTitleButtons() {
   });
 
   qs("#btnHelp")?.addEventListener("click", () => {
-    ui.helpText.textContent = helpText();
-    showScene("scene-help");
+    openHelp(ui);
   });
 
   qs("#btnTrophy")?.addEventListener("click", () => {
@@ -170,7 +192,10 @@ function bindTitleButtons() {
   });
 
   for (const b of document.querySelectorAll(".btnBackTitle")) {
-    b.addEventListener("click", () => showScene("scene-title"));
+    b.addEventListener("click", () => {
+      resetUiToTitle();
+      showScene("scene-title");
+    });
   }
 
   qs("#btnPlayAgain")?.addEventListener("click", async () => {
@@ -181,6 +206,7 @@ function bindTitleButtons() {
   });
 
   // 初期表示
+  resetUiToTitle();
   showScene("scene-title");
 }
 
@@ -409,11 +435,9 @@ async function setupDeal() {
 
 // --- 競り ---
 async function phaseBidding() {
+  setPhaseText("皇帝競り", "最低13から入札。全員パスなら配り直し。");
+
   const MIN_BID = 13;
-
-  setPhaseText("皇帝競り", `最低${MIN_BID}から入札。全員パスなら配り直し。`);
-  await showCutin(ui, DIALOG.BID_START);
-
   const declText = (bid) => `${SUIT_LABEL[bid.suit]}${bid.count}`;
 
   let turnIndex = 0;
@@ -421,7 +445,6 @@ async function phaseBidding() {
 
   G.bid.current = null;
   G.bid.hadAnyBid = false;
-  G.bid.passesInRow = 0;
 
   let lastBidPid = null;
 
@@ -435,33 +458,34 @@ async function phaseBidding() {
 
     const currentText = bidToText(G.bid.current);
 
-    if (pid === getHumanPid()) {
+    const humanPid = getHumanPid();
+
+    if (pid === humanPid) {
       setPhaseText("皇帝競り（あなた）", `現在の最高入札：${currentText}\n入札するかパスしてください。`);
       const bid = await promptHumanBid(ui, { currentBidText: currentText, minCount: MIN_BID });
 
       if (!bid) {
+        log(`あなた：パス`);
         passesThisRound++;
-        G.bid.passesInRow++;
-        log("あなた：パス");
-
         if (!G.bid.hadAnyBid && passesThisRound >= 5) {
           G.redealCount++;
           const say = DIALOG.getRedealAllPass(G.redealCount);
-          await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+          showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
           log("全員パス：配り直し。");
           return false;
         }
       } else {
-        if (bid.count < MIN_BID || compareBid(bid, G.bid.current) <= 0) {
-          err("入札が無効です（最低枚数未満/現在以下）。パス扱いにします。");
-          passesThisRound++;
-          G.bid.passesInRow++;
-          log("あなた：パス（無効入札）");
+        const suitOk = bid && typeof bid.suit === "string" && ["C", "D", "H", "S"].includes(bid.suit);
+        const countOk = bid && Number.isFinite(bid.count) && bid.count >= MIN_BID && bid.count <= 20;
 
+        if (!suitOk || !countOk || compareBid(bid, G.bid.current) <= 0) {
+          err("入札が無効です（最低13未満/スート不正/現在以下）。パス扱いにします。");
+          log(`あなた：パス（無効入札）`);
+          passesThisRound++;
           if (!G.bid.hadAnyBid && passesThisRound >= 5) {
             G.redealCount++;
             const say = DIALOG.getRedealAllPass(G.redealCount);
-            await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+            showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
             log("全員パス：配り直し。");
             return false;
           }
@@ -469,12 +493,12 @@ async function phaseBidding() {
           G.bid.current = bid;
           G.bid.hadAnyBid = true;
           passesThisRound = 0;
-          lastBidPid = getHumanPid();
+          lastBidPid = humanPid;
 
           log(`あなた：入札 ${bidToText(bid)}`);
 
-          const say = DIALOG.getEmperorDeclare(players[getHumanPid()].name, declText(bid));
-          await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+          const say = DIALOG.getEmperorDeclare(players[humanPid].name, declText(bid));
+          showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
         }
       }
     } else {
@@ -485,13 +509,11 @@ async function phaseBidding() {
 
       if (!bid) {
         passesThisRound++;
-        G.bid.passesInRow++;
         log(`${p.name}：パス`);
-
         if (!G.bid.hadAnyBid && passesThisRound >= 5) {
           G.redealCount++;
           const say = DIALOG.getRedealAllPass(G.redealCount);
-          await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+          showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
           log("全員パス：配り直し。");
           return false;
         }
@@ -504,17 +526,19 @@ async function phaseBidding() {
         log(`${p.name}：入札 ${bidToText(bid)}`);
 
         const say = DIALOG.getEmperorDeclare(p.name, declText(bid));
-        await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+        showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
       }
     }
 
-    if (G.bid.hadAnyBid && G.bid.passesInRow >= 4) break;
-
+    // 周回
     turnIndex++;
     if (turnIndex > 200) {
       err("競りが異常に長いので強制終了");
       break;
     }
+
+    // “誰かが入札した後に4人連続パス” で終了
+    if (G.bid.hadAnyBid && passesThisRound >= 4) break;
   }
 
   if (lastBidPid == null) {
@@ -528,7 +552,7 @@ async function phaseBidding() {
   log(`皇帝確定：${players[lastBidPid].name}（${bidToText(G.bid.current)}）`);
 
   const sayFixed = DIALOG.getEmperorFixed(players[lastBidPid].name);
-  await showCutin(ui, { title: sayFixed.title, text: sayFixed.text, iconName: sayFixed.by });
+  showCutin(ui, { title: sayFixed.title, text: sayFixed.text, iconName: sayFixed.by });
 
   return true;
 }
@@ -676,7 +700,10 @@ async function playOneTrick() {
   G.trick.leadSuit = leadSuit;
   updateIndicators();
 
-  const result = evaluateTrickWinner({ plays: G.trick.plays, leadSuitResolved: leadSuit }, G.bid.trumpSuit);
+  const result = evaluateTrickWinner(
+    { plays: G.trick.plays, leadSuitResolved: leadSuit },
+    G.bid.trumpSuit
+  );
 
   const winnerPid = result.winnerPid;
   const winningCard = result.winningPlay.card;
@@ -705,7 +732,9 @@ async function playOneTrick() {
   }
   rebuildFactionPoints();
 
-  const row = G.trick.plays.map(p => `${players[p.pid].name}:${safeCardHtml(p.card)}`).join(" / ");
+  const row = G.trick.plays
+    .map(p => `${players[p.pid].name}:${safeCardHtml(p.card)}`)
+    .join(" / ");
   log(`トリック${tNo}：${row}`);
   log(`勝者：${players[winnerPid].name}（${safeCardHtml(winningCard)} / 理由：${result.reason}）`);
 
@@ -731,36 +760,6 @@ async function playOneTrick() {
   }
 
   G.trick.leaderPid = winnerPid;
-
-  // 同盟者判明（クリックまで残る）
-  if (!G.ally.known && G.ally.spec) {
-    const spec = G.ally.spec;
-const found = G.trick.plays.find(p => {
-  const c = p.card;
-  if (!spec) return false;
-  if (spec.isJoker) return c.isJoker && c.jokerColor === spec.jokerColor;
-  return !c.isJoker && c.suit === spec.suit && c.rank === spec.rank;
-});
-
-    if (found) {
-      G.ally.pid = found.pid;
-      G.ally.known = true;
-      updateTopFrames();
-      updateIndicators();
-
-      const emperorName = players[G.bid.emperorPid].name;
-      const allyName = players[G.ally.pid].name;
-
-      if (typeof DIALOG.getAllyReveal === "function") {
-        const say = DIALOG.getAllyReveal(allyName, emperorName);
-        await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
-      } else {
-        await showCutin(ui, { title: "同盟者判明", text: `同盟者：${allyName}`, iconName: allyName });
-      }
-
-      log(`同盟者判明：${allyName}`);
-    }
-  }
 
   updateIndicators();
   updateTopFrames();
@@ -843,7 +842,7 @@ async function takeTurnPlay(pid) {
   const ctx = {
     trumpSuit: G.bid.trumpSuit,
     leadSuit: leadSuitResolved,
-    trickSoFar: G.trick.plays,          // ai.js が .some するので必須
+    trickSoFar: G.trick.plays,
     canWinEstimateFn,
     designatedSpec,
     aimSpecial: G.aimSpecial[pid],
@@ -877,18 +876,45 @@ async function commitPlay(pid, card) {
   } else {
     // 2枚目以降：
     // - ジョーカーは「同スート卓判定」のため台札スートで扱う
-    // - 通常札は “自分のスート” を保持する（ここが重要）
+    // - 通常札は “自分のスート” を保持する
     const leadSuit = G.trick.leadSuit;
     resolvedSuit = card.isJoker ? leadSuit : card.suit;
   }
 
   G.trick.plays.push({ pid, card, resolvedSuit });
 
-  // 表示更新
+  // 表示更新（カードが場に出た状態を先に見せる）
   renderTrick(ui, players, G.trick.plays);
   updateIndicators();
 
   if (pid === getHumanPid()) redrawHandHuman(false);
+
+  // 同盟者判明（判明カードが出た瞬間に割り込み）
+  if (!G.ally.known && G.ally.spec) {
+    const spec = G.ally.spec;
+    const hit = spec.isJoker
+      ? (card.isJoker && card.jokerColor === spec.jokerColor)
+      : (!card.isJoker && card.suit === spec.suit && card.rank === spec.rank);
+
+    if (hit) {
+      G.ally.pid = pid;
+      G.ally.known = true;
+      updateTopFrames();
+      updateIndicators();
+
+      const emperorName = players[G.bid.emperorPid].name;
+      const allyName = players[G.ally.pid].name;
+
+      if (typeof DIALOG.getAllyReveal === "function") {
+        const say = DIALOG.getAllyReveal(allyName, emperorName);
+        await showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+      } else {
+        await showCutin(ui, { title: "同盟者判明", text: `同盟者：${allyName}`, iconName: allyName });
+      }
+
+      log(`同盟者判明：${allyName}`);
+    }
+  }
 
   await sleep(160);
 }
@@ -942,7 +968,6 @@ async function chooseLeadSuitForJoker(pid) {
 
 // --- 結果判定 ---
 async function phaseResult() {
-  // クリックで閉じる待機（cutin自体にクリックでhideCutinが付いている前提）
   const waitCutinDismiss = () =>
     new Promise((resolve) => {
       const on = () => {
@@ -953,7 +978,6 @@ async function phaseResult() {
     });
 
   setPhaseText("勝敗判定", "得点札を集計しています…");
-  showCutin(ui, { title: DIALOG.RESULT.title, text: DIALOG.RESULT.text, iconName: DIALOG.RESULT.by });
 
   const emperor = G.bid.emperorPid;
   const ally = G.ally.pid;
@@ -965,7 +989,6 @@ async function phaseResult() {
   const emperorSideWin = (impCount >= bidCount);
   const normalWinnerFaction = emperorSideWin ? "皇帝側" : "連合軍";
 
-  // 個人獲得札で特殊勝利チェック
   const specials = [];
   for (let pid = 0; pid < 5; pid++) {
     const name = players[pid].name;
@@ -979,21 +1002,7 @@ async function phaseResult() {
     specialWinner = specials[0];
   }
 
-  // トロフィー更新（既存ロジック維持）
-  const winnerPids = [];
-  if (normalWinnerFaction === "皇帝側") {
-    winnerPids.push(emperor);
-    if (ally != null) winnerPids.push(ally);
-  } else {
-    for (let pid = 0; pid < 5; pid++) {
-      const isImp = (pid === emperor) || (ally != null && pid === ally);
-      if (!isImp) winnerPids.push(pid);
-    }
-  }
-  for (const pid of winnerPids) updateTrophy({ characterName: players[pid].name, silver: true });
-  if (specialWinner) updateTrophy({ characterName: specialWinner.name, gold: true });
-
-  // リザルト表示
+  // リザルト文
   let summary = "";
   summary += `宣言：${bidToText(G.bid.current)}\n`;
   summary += `皇帝：${players[emperor].name}\n`;
@@ -1005,47 +1014,47 @@ async function phaseResult() {
     summary += `（特殊勝利は通常勝利より優先）\n`;
   }
 
-  const impCards = extractPointCards(G.faction.imperial.point);
-  const coaCards = extractPointCards(G.faction.coalition.point);
+  // リザルト一覧：カードに ownerName を付与して渡す（UIで「誰の特殊勝利札か」を判定できるようにする）
+  const imperialCards = [];
+  const coalitionCards = [];
+  for (let pid = 0; pid < 5; pid++) {
+    const isImp = (pid === emperor) || (ally != null && pid === ally);
+    const pts = extractPointCards(G.captured[pid].point);
+    for (const c of pts) {
+      const item = { ...c, ownerName: players[pid].name };
+      if (isImp) imperialCards.push(item);
+      else coalitionCards.push(item);
+    }
+  }
 
-  renderResult(ui, {
-    summary,
-    imperialCards: impCards,
-    coalitionCards: coaCards,
-  });
+  renderResult(ui, { summary, imperialCards, coalitionCards });
 
   showScene(ui, "result");
   updateTopFrames();
   updateIndicators();
 
-  // 「集計中」を閉じる（クリックしなくても進める）
-  await sleep(450);
-  hideCutin(ui);
-
-  // 勝利セリフ（クリックで閉じるまで表示）
-  {
-    const coalitionNames = [];
-    if (!emperorSideWin) {
-      for (let pid = 0; pid < 5; pid++) {
-        const isImp = (pid === emperor) || (ally != null && pid === ally);
-        if (!isImp) coalitionNames.push(players[pid].name);
-      }
-    }
-
-    const say = DIALOG.getGameWin({
-      emperorSideWin,
-      emperorName: players[emperor].name,
-      coalitionNames,
-    });
-
-    showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
-    await waitCutinDismiss();
+  // 勝利セリフ（クリックで消える）
+  const coalitionNames = [];
+  for (let pid = 0; pid < 5; pid++) {
+    const isImp = (pid === emperor) || (ally != null && pid === ally);
+    if (!emperorSideWin && !isImp) coalitionNames.push(players[pid].name);
   }
+  const sayWin = DIALOG.getGameWin({
+    emperorSideWin,
+    emperorName: players[emperor].name,
+    coalitionNames,
+  });
 
-  // 特殊勝利セリフ（成立していれば、クリックで閉じるまで表示）
+  // タイトルを出し分け
+  const normalTitle = emperorSideWin ? "皇帝側勝利" : "連合軍勝利";
+  showCutin(ui, { title: normalTitle, text: sayWin.text, iconName: sayWin.by });
+  await waitCutinDismiss();
+
+  // 特殊勝利セリフ（成立していれば、クリックで消える）
   if (specialWinner) {
-    const say = DIALOG.getSpecialWin(specialWinner.name);
-    showCutin(ui, { title: say.title, text: say.text, iconName: say.by });
+    const saySp = DIALOG.getSpecialWin(specialWinner.name);
+    const spTitle = `特殊勝利（${specialWinner.title}）`;
+    showCutin(ui, { title: spTitle, text: saySp.text, iconName: saySp.by });
     await waitCutinDismiss();
   }
 }
