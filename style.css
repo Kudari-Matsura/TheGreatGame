@@ -23,7 +23,22 @@
 
 *{ box-sizing: border-box; }
 html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif; }
-button{ cursor:pointer; border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,0.06); color: var(--text); padding: 10px 14px; border-radius: 12px; font-weight: 650; }
+button{
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+
+  /* 追加：端末に合わせて大きく（上限付き） */
+  font-size: clamp(16px, 2.2vw, 22px);
+  line-height: 1.15;
+  padding: clamp(12px, 1.6vw, 18px) clamp(14px, 2.0vw, 22px);
+
+  border-radius: 14px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
 button:hover{ border-color: rgba(255,255,255,.32); background: rgba(255,255,255,0.09); }
 button:disabled{ opacity:.45; cursor:not-allowed; }
 
@@ -303,36 +318,52 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
 
 .trick-entry .who{
-  font-size: 12px;
+  font-size: clamp(14px, 2.0vw, 18px);
+  font-weight: 850;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.trick-entry .card{ margin-top: 4px; font-weight: 900; }
+.trick-entry .card{
+  margin-top: 4px;
+  font-weight: 900;
+  font-size: clamp(18px, 2.3vw, 28px);
+  line-height: 1.1;
+}
 
 .hand{ display:flex; flex-wrap:wrap; gap: 8px; min-height: 70px; }
 .card-btn{
   border:1px solid var(--cardBorder);
   background: var(--card);
-  border-radius: 10px;
-  padding: 6px 7px;
-  min-width: 52px;
+
+  /* 追加：カード枠を大きく（ただし画面に合わせて自動で縮む） */
+  min-width: clamp(62px, 6.5vw, 96px);
+  min-height: clamp(62px, 7.0vw, 104px);
+  padding: clamp(8px, 1.2vw, 14px) clamp(8px, 1.1vw, 12px);
+
+  border-radius: 12px;
+
   display:flex;
   flex-direction:column;
   gap: 0;
   align-items:center;
 
-  /* 追加：枠の中央に寄せる */
+  /* 既存意図：中央寄せ */
   justify-content: center;
   text-align: center;
 }
 
 .card-btn .t{
   font-weight: 950;
-  font-size: 12px;
-  line-height: 1.1;
+
+  /* 追加：文字を大きく（上限付き） */
+  font-size: clamp(18px, 2.4vw, 30px);
+  line-height: 1.05;
+
+  /* ちょい読みやすく */
+  letter-spacing: .2px;
 }
 
 .card-btn .s{ font-size: 10px; color: var(--muted); }
@@ -349,11 +380,12 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 .result-summary{ font-size: 14px; color: rgba(233,237,245,.92); line-height: 1.5; }
 .result-cards{ display:flex; flex-wrap:wrap; gap: 6px; }
 .card-pill{
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.22);
   font-weight: 900;
+  font-size: clamp(14px, 1.9vw, 20px);
 }
 
 .help-panel{
@@ -662,14 +694,15 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   min-height: 24px;
 }
 .char-point-pill{
-  padding: 2px 6px;  /* 詰める */
+  padding: 2px 6px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,16);
   background: rgba(0,0,0,20);
   font-weight: 900;
-  font-size: 11px;   /* 少し小さくして7枚入りやすく */
+  font-size: 11px;
   line-height: 1.1;
 }
+
 
 .trick-row{
   display:grid;
@@ -688,19 +721,24 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
 .ind-line{
   display:grid;
-  grid-template-columns: 84px 1fr;
+  grid-template-columns: clamp(90px, 18vw, 120px) 1fr;
   gap: 10px;
   align-items:center;
   padding: 6px 0;
 }
+
 .ind-k{
-  font-size: 12px;
-  color: rgba(233,237,245,.72);
+  font-size: clamp(12px, 1.8vw, 16px);
+  color: rgba(233,237,245,72);
+  white-space: nowrap;
 }
+
 .ind-v{
   font-weight: 950;
-  font-size: 14px;
+  font-size: clamp(14px, 2.2vw, 20px);
+  white-space: nowraq;
 }
+
 
 .trick-head{
   display:flex;
@@ -742,12 +780,13 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 }
 
 .card-btn.small{
-  min-width: 46px;
-  padding: 5px 6px;
-  border-radius: 9px;
+  min-width: clamp(56px, 6.0vw, 88px);
+  min-height: clamp(56px, 6.2vw, 92px);
+  padding: clamp(7px, 1.0vw, 12px) clamp(7px, 1.0vw, 10px);
+  border-radius: 11px;
 }
 .card-btn.small .t{
-  font-size: 11px;
+  font-size: clamp(16px, 2.2vw, 26px);
 }
 
 /* Character select */
@@ -839,15 +878,31 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   margin-top: 10px;
 }
 
-@media (max-width: 760px){
+@media (max-width: 760px) and (orientation: portrait){
   .select-grid{ grid-template-columns: repeat(2, 1fr); }
 }
 
 /* 小画面：左を折りたたむ方向の逃げ */
 /* 小画面：縦向きのときだけ左を折りたたむ（横向きはPCと同じ2カラム維持） */
+/* スマホ：縦は2列、横は1列（横スクロール） */
 @media (max-width: 980px) and (orientation: portrait){
-  .game-layout{ grid-template-columns: 1fr; }
-  .log{ height: 210px; }
+  .select-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) and (orientation: landscape){
+  .select-grid{
+    display:flex;
+    flex-wrap: nowrap;      /* 1列固定 */
+    overflow-x: auto;       /* 横だけスクロール可 */
+    overflow-y: hidden;
+    gap: 10px;
+    padding-bottom: 8px;    /* スクロールバー分の余裕 */
+    -webkit-overflow-scrolling: touch;
+  }
+  .select-card{
+    flex: 0 0 clamp(140px, 22vw, 180px); /* 小さすぎず、端末で自動調整 */
+    height: auto;
+  }
 }
 
 /* モバイル：ボタンや文字サイズ */
