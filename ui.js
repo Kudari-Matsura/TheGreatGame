@@ -940,8 +940,12 @@ export function creditsText() {
   return [
 `・背景、5人の立ち絵、5人の顔アイコン
 …Nano banana pro
+
 ・王冠アイコン
 …Nano banana
+
+・大体のプログラム
+…Chat GPT-5.2 Thinking
 
 製作者：Kudari.Matsura`
   ].join("\n");
